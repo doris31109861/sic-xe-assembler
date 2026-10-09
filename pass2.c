@@ -1,3 +1,10 @@
+/*
+ * pass2.c — SIC/XE 兩階段組譯器（系統程式期末專題）
+ *
+ * 以課程提供的範本（tokenizer：ASM_getc / ASM_token、opcode table、組譯器架構）為基礎延伸完成。
+ * Pass 1：逐行配置位址（LOC）並建立符號表；Pass 2：依 Format 1–4 與定址模式（# @ ,X）
+ * 計算 PC-relative / Base-relative 位移、產生目的碼，輸出 H / T / M / E 記錄的 Object Program。
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
