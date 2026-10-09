@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 — README 註明以 AI 協助
+
+- **內容**：README 開頭加上說明：2026/10 的整理、測試與改進是以 AI（Claude）協助完成，逐項紀錄見本檔。
+- **原因**：讓看 repo 的人清楚知道哪些部分是後來以 AI 協助完成的，與原本的作業區分。
+- **測試**：只改文件。
+
 ## 2026-10-09 — 自動測試
 
 - **內容**：新增 `tests/run_tests.sh` 與 `tests/cases/`：(1) 課程範例 COPY 程式的 Object Program 與 `examples/output.txt` 逐字比對；(2) 錯誤案例（重複標籤、未定義符號）比對 stderr 訊息與行號、確認回傳 1 且不產生輸出檔；(3) 輸入檔不存在回傳 1。新增 GitHub Actions 在 Linux 編譯並執行測試。
