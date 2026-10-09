@@ -31,6 +31,8 @@ gcc pass2.c -o assembler
 ./assembler                                 # 不給參數時讀 input.txt、輸出 output.txt
 ```
 
+測試：`bash tests/run_tests.sh ./assembler`（範例輸出比對、錯誤案例、檔案不存在；每次 push 由 GitHub Actions 在 Linux 上執行）
+
 錯誤訊息範例（把第 5 行的標籤改成重複的 `FIRST`、第 7 行用了沒定義的 `ZERO`）：
 
 ```
@@ -81,6 +83,8 @@ gcc pass2.c -o assembler
 ./assembler examples/input.txt output.obj   # explicit input and output
 ./assembler                                 # defaults: input.txt → output.txt
 ```
+
+Tests: `bash tests/run_tests.sh ./assembler` (example output, error cases, missing file), run by GitHub Actions on every push.
 
 ### What I learned
 

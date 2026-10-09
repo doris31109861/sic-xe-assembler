@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-09 — 自動測試
+
+- **內容**：新增 `tests/run_tests.sh` 與 `tests/cases/`：(1) 課程範例 COPY 程式的 Object Program 與 `examples/output.txt` 逐字比對；(2) 錯誤案例（重複標籤、未定義符號）比對 stderr 訊息與行號、確認回傳 1 且不產生輸出檔；(3) 輸入檔不存在回傳 1。新增 GitHub Actions 在 Linux 編譯並執行測試。
+- **原因**：修改程式後能一鍵確認沒有改壞。
+- **測試**：Windows gcc 本機 5 項全部通過；Linux 由 CI 執行。
+
 ## 2026-10-09 — 命令列參數讀檔、錯誤處理
 
 - **內容**：`./assembler [輸入檔] [輸出檔]`（預設仍是 `input.txt` / `output.txt`）；開檔失敗會印出訊息並回傳 1。Pass 1 後新增 `check_errors()`：檢查重複定義的標籤與未定義的符號運算元（略過暫存器、數字常數與不需要符號的指令），印出行號，有錯就不產生輸出檔。原始碼超過 99 行時停止，避免寫出 `line_arr[100]` 的範圍。

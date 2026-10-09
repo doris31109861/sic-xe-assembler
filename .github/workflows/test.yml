@@ -1,0 +1,14 @@
+# 每次 push 在 Linux 上編譯組譯器並執行 tests/run_tests.sh
+name: test
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: gcc -O2 -Wall pass2.c -o assembler
+      - name: Run tests
+        run: bash tests/run_tests.sh ./assembler
