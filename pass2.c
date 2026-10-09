@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define LEN_SYMBOL (20)
 #define TRUE (1)
@@ -709,7 +710,64 @@ int find_nextline(int line_count) {
     return texter_len;
 }
 
-int main() {
+/* ------------------------------------------------------------------
+ * 錯誤檢查（Pass 1 結束後、產生目的碼前執行）
+ *   - 重複定義：同一個標籤出現在兩行以上
+ *   - 未定義符號：運算元看起來是符號（英文字母開頭），但符號表裡找不到
+ * line_arr 的索引就是原始碼的行號（註解行與空行沒有存入，欄位保持空字串）。
+ * 回傳錯誤數量，並把每個錯誤連同行號印到 stderr。
+ * ------------------------------------------------------------------ */
+static const char *REGISTERS[] = {"A", "X", "L", "B", "S", "T", "F", "PC", "SW"};
+
+static int is_register(const char *s) {
+    for (size_t i = 0; i < sizeof(REGISTERS) / sizeof(REGISTERS[0]); i++) {
+        if (strcmp(s, REGISTERS[i]) == 0) return TRUE;
+    }
+    return FALSE;
+}
+
+static int symbol_defined(const char *name) {
+    for (int i = 1; i < line_len; i++) {
+        if (line_arr[i].symbol[0] != '\0' && strcmp(line_arr[i].symbol, name) == 0) return TRUE;
+    }
+    return FALSE;
+}
+
+int check_errors(void) {
+    int errors = 0;
+    for (int i = 1; i < line_len; i++) {
+        LINE *ln = &line_arr[i];
+
+        /* 重複定義：只回報第二次以後出現的那一行 */
+        if (ln->symbol[0] != '\0') {
+            for (int j = 1; j < i; j++) {
+                if (strcmp(ln->symbol, line_arr[j].symbol) == 0) {
+                    fprintf(stderr, "第 %d 行：符號 %s 重複定義（第 %d 行已定義）\n", i, ln->symbol, j);
+                    errors++;
+                    break;
+                }
+            }
+        }
+
+        /* 未定義符號：略過不需要符號的指令與 Format 2（運算元是暫存器） */
+        if (ln->op[0] == '\0' || ln->fmt == FMT2) continue;
+        if (strcmp(ln->op, "START") == 0 || strcmp(ln->op, "BYTE") == 0 || strcmp(ln->op, "WORD") == 0 ||
+            strcmp(ln->op, "RESB") == 0 || strcmp(ln->op, "RESW") == 0 || strcmp(ln->op, "NOBASE") == 0)
+            continue;
+        const char *opnd = ln->operand1;
+        if (!isalpha((unsigned char)opnd[0]) || is_register(opnd)) continue;
+        if (!symbol_defined(opnd)) {
+            fprintf(stderr, "第 %d 行：未定義的符號 %s（指令 %s）\n", i, opnd, ln->op);
+            errors++;
+        }
+    }
+    return errors;
+}
+
+int main(int argc, char *argv[]) {
+    /* 命令列參數：./assembler [輸入檔] [輸出檔]，預設為 input.txt / output.txt */
+    const char *input_path = (argc > 1) ? argv[1] : "input.txt";
+    const char *output_path = (argc > 2) ? argv[2] : "output.txt";
     // pass 1
     int i, c, line_count, line_loc, last_line_loc = 0;
     int start_loc = 0;
@@ -717,9 +775,18 @@ int main() {
     char buf[LEN_SYMBOL];
     line_loc = 0;
     LINE line;
-    fptr = fopen("output.txt","w");
-    ASM_fp = fopen("input.txt","r");
+    ASM_fp = fopen(input_path, "r");
+    if (ASM_fp == NULL) {
+        fprintf(stderr, "無法開啟輸入檔 %s\n", input_path);
+        return 1;
+    }
     for (line_count = 1; (c = process_line(&line)) != LINE_EOF; line_count++) {
+        /* line_arr 只有 100 格（索引 1~99），超過就停止，避免寫出陣列範圍 */
+        if (line_count >= 100) {
+            fprintf(stderr, "原始碼超過 99 行，超出 line_arr 容量\n");
+            fclose(ASM_fp);
+            return 1;
+        }
         if (line_count == 1) {
             if (strcmp(line.op, "START") == 0) {
                 line_loc = strtol(line.operand1, NULL, 16);  // 轉換起始位址為十進位數字
@@ -752,6 +819,17 @@ int main() {
             sicxe = TRUE;
             break;
         }
+    }
+    // 產生目的碼前先檢查錯誤；有錯就不輸出 Object Program
+    int errors = check_errors();
+    if (errors > 0) {
+        fprintf(stderr, "共 %d 個錯誤，未產生 %s\n", errors, output_path);
+        return 1;
+    }
+    fptr = fopen(output_path, "w");
+    if (fptr == NULL) {
+        fprintf(stderr, "無法建立輸出檔 %s\n", output_path);
+        return 1;
     }
     // pass 2
     header(line_arr[1], start_loc, program_len);  // 輸出Header Record
@@ -822,4 +900,5 @@ int main() {
         fprintf(fptr,"E%06X\n", start_loc);  // 輸出End Record
     }
     fclose(fptr);
+    return 0;
 }

@@ -20,14 +20,24 @@
 - **組譯指引**：`START`、`END`、`BYTE`、`WORD`、`RESB`、`RESW`、`BASE`、`NOBASE`
 - **Pass 1**：為每一行分配位址（LOC）並建立符號表
 - **Pass 2**：計算 PC-relative / Base-relative 位移並產生目的碼
-- **Object Program**：輸出 Header、Text、Modification、End 記錄到 `output.txt`
+- **Object Program**：輸出 Header、Text、Modification、End 記錄
+- **錯誤檢查**：產生目的碼前檢查重複定義與未定義的符號，印出行號；有錯誤時不產生輸出檔
 
 ### 編譯與執行
 
 ```bash
 gcc pass2.c -o assembler
-cp examples/input.txt .
-./assembler          # 讀取 input.txt，輸出 output.txt
+./assembler examples/input.txt output.obj   # 指定輸入、輸出檔
+./assembler                                 # 不給參數時讀 input.txt、輸出 output.txt
+```
+
+錯誤訊息範例（把第 5 行的標籤改成重複的 `FIRST`、第 7 行用了沒定義的 `ZERO`）：
+
+```
+第 5 行：符號 FIRST 重複定義（第 2 行已定義）
+第 7 行：未定義的符號 ZERO（指令 COMP）
+第 10 行：未定義的符號 CLOOP（指令 J）
+共 3 個錯誤，未產生 output.obj
 ```
 
 ### 執行結果（`examples/output.txt`）
@@ -61,14 +71,15 @@ A two-pass assembler for the **SIC/XE** architecture, written in C. Pass 1 assig
 - Simple, immediate (`#`), indirect (`@`) and indexed (`,X`) addressing
 - Directives: `START`, `END`, `BYTE`, `WORD`, `RESB`, `RESW`, `BASE`, `NOBASE`
 - PC-relative and base-relative displacement
-- Header, Text, Modification and End records written to `output.txt`
+- Header, Text, Modification and End records
+- Error checks before code generation: duplicate labels and undefined symbols are reported with line numbers, and no output is written
 
 ### Build & Run
 
 ```bash
 gcc pass2.c -o assembler
-cp examples/input.txt .
-./assembler          # reads input.txt, writes output.txt
+./assembler examples/input.txt output.obj   # explicit input and output
+./assembler                                 # defaults: input.txt → output.txt
 ```
 
 ### What I learned
